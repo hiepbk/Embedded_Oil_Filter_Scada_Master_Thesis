@@ -57,23 +57,32 @@
 #define LS_State HAL_GPIO_ReadPin(LOW_SENSOR_GPIO_Port,LOW_SENSOR_Pin)
 #define HS_State HAL_GPIO_ReadPin(HIGH_SENSOR_GPIO_Port,HIGH_SENSOR_Pin)
 #define BS_State HAL_GPIO_ReadPin(BUBBLE_SENSOR_GPIO_Port,BUBBLE_SENSOR_Pin)
+#define VE_State HAL_GPIO_ReadPin(VE_GPIO_Port,VE_Pin)
+#define Pump1_State HAL_GPIO_ReadPin(Pump1_GPIO_Port,Pump1_Pin)
+#define Pump2_State HAL_GPIO_ReadPin(Pump2_GPIO_Port,Pump2_Pin)
+#define Root_State HAL_GPIO_ReadPin(Root_GPIO_Port,Root_Pin)
+#define Vac_State HAL_GPIO_ReadPin(Vac_GPIO_Port,Vac_Pin)
+#define Cooler_State HAL_GPIO_ReadPin(Cooler_GPIO_Port,Cooler_Pin)
+#define Heater1_State HAL_GPIO_ReadPin(Heater1_GPIO_Port,Heater1_Pin)
+#define Heater2_State HAL_GPIO_ReadPin(Heater2_GPIO_Port,Heater2_Pin)
+
 //Output
-#define Pump1_on HAL_GPIO_WritePin(Pump1_GPIO_Port,Pump1_Pin,GPIO_PIN_SET);
-#define Pump1_off HAL_GPIO_WritePin(Pump1_GPIO_Port,Pump1_Pin,GPIO_PIN_RESET);
-#define Pump2_on HAL_GPIO_WritePin(Pump2_GPIO_Port,Pump2_Pin,GPIO_PIN_SET);
-#define Pump2_off HAL_GPIO_WritePin(Pump2_GPIO_Port,Pump2_Pin,GPIO_PIN_RESET);
-#define Root_on HAL_GPIO_WritePin(Root_GPIO_Port,Root_Pin,GPIO_PIN_SET);
-#define Root_off HAL_GPIO_WritePin(Root_GPIO_Port,Root_Pin,GPIO_PIN_RESET);
-#define Vac_on HAL_GPIO_WritePin(Vac_GPIO_Port,Vac_Pin,GPIO_PIN_SET);
-#define Vac_off HAL_GPIO_WritePin(Vac_GPIO_Port,Vac_Pin,GPIO_PIN_RESET);
-#define Cooler_on HAL_GPIO_WritePin(Cooler_GPIO_Port,Cooler_Pin,GPIO_PIN_SET);
-#define Cooler_off HAL_GPIO_WritePin(Cooler_GPIO_Port,Cooler_Pin,GPIO_PIN_RESET);
-#define VE_on HAL_GPIO_WritePin(VE_GPIO_Port,VE_Pin,GPIO_PIN_SET);
-#define VE_off HAL_GPIO_WritePin(VE_GPIO_Port,VE_Pin,GPIO_PIN_RESET);
-#define Heater1_on HAL_GPIO_WritePin(Heater1_GPIO_Port,Heater1_Pin,GPIO_PIN_SET);
-#define Heater1_off HAL_GPIO_WritePin(Heater1_GPIO_Port,Heater1_Pin,GPIO_PIN_RESET);
-#define Heater2_on HAL_GPIO_WritePin(Heater2_GPIO_Port,Heater2_Pin,GPIO_PIN_SET);
-#define Heater2_off HAL_GPIO_WritePin(Heater2_GPIO_Port,Heater2_Pin,GPIO_PIN_RESET);
+#define Pump1_on HAL_GPIO_WritePin(Pump1_GPIO_Port,Pump1_Pin,GPIO_PIN_SET)
+#define Pump1_off HAL_GPIO_WritePin(Pump1_GPIO_Port,Pump1_Pin,GPIO_PIN_RESET)
+#define Pump2_on HAL_GPIO_WritePin(Pump2_GPIO_Port,Pump2_Pin,GPIO_PIN_SET)
+#define Pump2_off HAL_GPIO_WritePin(Pump2_GPIO_Port,Pump2_Pin,GPIO_PIN_RESET)
+#define Root_on HAL_GPIO_WritePin(Root_GPIO_Port,Root_Pin,GPIO_PIN_SET)
+#define Root_off HAL_GPIO_WritePin(Root_GPIO_Port,Root_Pin,GPIO_PIN_RESET)
+#define Vac_on HAL_GPIO_WritePin(Vac_GPIO_Port,Vac_Pin,GPIO_PIN_SET)
+#define Vac_off HAL_GPIO_WritePin(Vac_GPIO_Port,Vac_Pin,GPIO_PIN_RESET)
+#define Cooler_on HAL_GPIO_WritePin(Cooler_GPIO_Port,Cooler_Pin,GPIO_PIN_SET)
+#define Cooler_off HAL_GPIO_WritePin(Cooler_GPIO_Port,Cooler_Pin,GPIO_PIN_RESET)
+#define VE_on HAL_GPIO_WritePin(VE_GPIO_Port,VE_Pin,GPIO_PIN_SET)
+#define VE_off HAL_GPIO_WritePin(VE_GPIO_Port,VE_Pin,GPIO_PIN_RESET)
+#define Heater1_on HAL_GPIO_WritePin(Heater1_GPIO_Port,Heater1_Pin,GPIO_PIN_SET)
+#define Heater1_off HAL_GPIO_WritePin(Heater1_GPIO_Port,Heater1_Pin,GPIO_PIN_RESET)
+#define Heater2_on HAL_GPIO_WritePin(Heater2_GPIO_Port,Heater2_Pin,GPIO_PIN_SET)
+#define Heater2_off HAL_GPIO_WritePin(Heater2_GPIO_Port,Heater2_Pin,GPIO_PIN_RESET)
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -86,7 +95,7 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-bool Error_Sensor=false;
+bool Error_Sensor=false,init_stage=true;
 uint8_t stage=0,mode=1;
 uint16_t flow =22;
 char bfr_wifi1[200],bfr_wifi2[200],bfr_rs485[200];
@@ -106,6 +115,7 @@ static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM2_Init(void);
+
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -130,14 +140,35 @@ void RECEIVER_EN(void)
 }
 /* END TransferRTU Enable */
 
+
+void Transfer_data(){
+//			sprintf(bfr_wifi2,"{\"Id\":\"%d\",\"U1\":\"%0.3f\",\"U2\":\"%0.3f\",\"I1\":\"%0.3f\",\"I2\":\"%0.3f\",\"cosP1\":\"%0.3f\",\"cosP2\":\"%0.3f\"}\n",id,Vhd1,Vhd2,Ihd1,Ihd2,cosP1,cosP2);
+			sprintf(bfr_wifi2,"{\"LS\":\"%d\",\"HS\":\"%d\",\"BS\":\"%d\",\"P1\":\"%d\",\"P2\":\"%d\",\"Root\":\"%d\",\"Vac\":\"%d\",\"Cooler\":\"%d\",\"VE\":\"%d\",\"H1\":\"%d\",\"H2\":\"%d\"}\n",LS_State,HS_State,BS_State,Pump1_State,Pump2_State,Root_State,Vac_State,Cooler_State,VE_State,Heater1_State,Heater2_State);
+			HAL_UART_Transmit_IT(&huart1,(uint8_t*)bfr_wifi2,strlen(bfr_wifi2));
+//			HAL_Delay(100);
+//			sprintf(bfr_wifi1,"{\"csS\":\"%0.3f\",\"csP\":\"%0.3f\",\"csQ\":\"%0.3f\",\"cosP\":\"%0.3f\",\"freq\":\"%0.3f\",\"P_peak\":\"%0.3f\",\"Q_peak\":\"%0.3f\"}\n",csS,csP,csQ,cosP,freq,P_peak,Q_peak);
+//			HAL_UART_Transmit_IT(&huart1,(uint8_t*)bfr_wifi1,strlen(bfr_wifi1));
+//			HAL_Delay(100);
+
+}
+
+void check_init_stages(){
+	if(LS_State&&HS_State){
+		if(!VE_State){
+			stage=0;
+			init_stage=true;
+		}
+	}
+	else {init_stage=false;}
+
+}
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if(GPIO_Pin == LOW_SENSOR_Pin){
 		// Xuong duoi muc thap
 		// Duoi muc thap 0 0 1 0 
 		if(LS_State&&HS_State){
-//			Pump1_on;
-//			Pump2_off;
-			stage=0;
+			stage=4;
 			Error_Sensor=false; //RESET LOI
 		}
 		if(LS_State&&!HS_State){
@@ -146,8 +177,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		//Vuot len muc thap
 		//Nam giua muc thap va muc cao(TH on dinh) 1 0 1 1 
 		if((!LS_State) &&(HS_State)){
-//			Pump1_on;
-//			Pump2_on;
 			stage = 1;
 			Error_Sensor=false; //RESET LOI
 		}
@@ -162,8 +191,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		// Vuot qua muc cao 1101
 		if(!HS_State&&!LS_State){
 			stage=2;
-//			Pump1_off;
-//			Pump2_on;
 			Error_Sensor=false; //RESET LOI
 		}
 		if(!HS_State&&LS_State){
@@ -172,17 +199,22 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		// Xuong duoi muc cao
 		//Giam xuong nam giua muc thap va muc cao (TH on dinh) 1 0 1 1
 		if(HS_State&&!LS_State){
-//			Pump2_on;
-//			Pump1_on;
-			stage=1;
+			stage=3;
 			Error_Sensor=false; //RESET LOI
 		}
-		// 01xx va 0010 la 2 th bao loi
 		if(HS_State&&LS_State){
 		Error_Sensor=true;// LOI
 		}
 	}
+	if(GPIO_Pin == BUBBLE_SENSOR_Pin){
+		if(BS_State){VE_off;}
+		else {VE_on;}
+		Transfer_data();
+	
+	}
 }
+
+
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim4)
 {
@@ -192,15 +224,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim4)
 	}
 }
 
-void sendata_wifi(){
-//			sprintf(bfr_wifi2,"{\"Id\":\"%d\",\"U1\":\"%0.3f\",\"U2\":\"%0.3f\",\"I1\":\"%0.3f\",\"I2\":\"%0.3f\",\"cosP1\":\"%0.3f\",\"cosP2\":\"%0.3f\"}\n",id,Vhd1,Vhd2,Ihd1,Ihd2,cosP1,cosP2);
-//			HAL_UART_Transmit_IT(&huart1,(uint8_t*)bfr_wifi2,strlen(bfr_wifi2));
-//			HAL_Delay(100);
-//			sprintf(bfr_wifi1,"{\"csS\":\"%0.3f\",\"csP\":\"%0.3f\",\"csQ\":\"%0.3f\",\"cosP\":\"%0.3f\",\"freq\":\"%0.3f\",\"P_peak\":\"%0.3f\",\"Q_peak\":\"%0.3f\"}\n",csS,csP,csQ,cosP,freq,P_peak,Q_peak);
-//			HAL_UART_Transmit_IT(&huart1,(uint8_t*)bfr_wifi1,strlen(bfr_wifi1));
-//			HAL_Delay(100);
 
-}
 
 /* USER CODE END PFP */
 
@@ -243,7 +267,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	HAL_TIM_Base_Start_IT(&htim4);
 	//HAL_TIM_Base_Start_IT(&htim2);
-
+	check_init_stages();
 
 	
   /* USER CODE END 2 */
@@ -254,31 +278,121 @@ int main(void)
   {
 		//mode=1 => Auto Mode
 		HAL_GPIO_TogglePin(led_GPIO_Port,led_Pin);
-		if(mode==1){
-			if(stage==0){ // Trang thai muc nuoc duoi muc thap
-				// Neu ca 2 cam bien chua tac dong -> duoi muc thap -> thi moi cho bom
-				Cooler_on; //Bat che do lam lanh
-				Pump1_on; //Chay bom dau vao
-				Pump2_off;//ngat bom dau ra
-				Root_on; //Chay root pump
-				Vac_on; // Chay Vac pump
-				VE_off; //Khoa van VE
-				if(tik%5==0){
-					check=5;
-						}
-		//HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0,GPIO_PIN_SET);
-				}
-			if(stage==1){ //Trang thai on dinh
-				Cooler_on; //Bat che do lam lanh
-				Pump1_on; //Chay bom dau vao
-				Pump2_on;//ngat bom dau ra
-				Root_on; //Chay root pump
-				Vac_on; // Chay Vac pump
-				VE_off; //Khoa van VE	
-		
+		if(init_stage==true){
+			if(mode==1){
+				if(stage==0){ // Trang thai muc nuoc duoi muc thap
+					// Neu ca 2 cam bien chua tac dong -> duoi muc thap -> thi moi cho bom
+					Transfer_data();//Cap nhat trang thai ban dau
+					Cooler_on; //Bat che do lam lanh
+					Vac_on; // Chay Vac pump
+					Pump2_off;
+					HAL_Delay(5000);
+					Root_on;
+					HAL_Delay(10000);
+					Pump1_on;
+					if(flow<2000){
+						Heater1_on;
+					}
+					else {
+						Heater1_on;
+						Heater2_on;
+					}
+					Transfer_data();//Cap nhat trang thai ket thuc
+					stage=100;//Out khoi vong lap
+
+
 			}
+				if(stage==1){ //Trang thai on dinh
+					Transfer_data();//Cap nhat trang thai ban dau
+					if(flow<2000){
+						Heater1_on;
+					}
+					else {
+						Heater1_on;
+						Heater2_on;
+					}
+					Cooler_on; //Bat che do lam lanh
+					Vac_on;
+					Root_on; //Chay root pump
+					Pump1_on; //Chay bom dau vao
+					HAL_Delay(1000);
+					Pump2_on;//ngat bom dau ra
+					Transfer_data();//Cap nhat trang thai ket thuc
+					stage=100;//Out khoi vong lap
+				}
+				if(stage==2){ //Trang thai vuot muc cao
+					Transfer_data();//Cap nhat trang thai ban dau
+					if(flow<2000){
+						Heater1_on;
+					}
+					else {
+						Heater1_on;
+						Heater2_on;
+					}
+					Cooler_on; //Bat che do lam lanh
+					Vac_on;
+					Root_on; //Chay root pump
+					Pump1_off; //Chay bom dau vao
+					Pump2_on;//ngat bom dau ra
+					Transfer_data();//Cap nhat trang thai ket thuc
+					stage=100;//Out khoi vong lap					
+				}
+				if(stage==3){ //Tu muc cao xuong on dinh
+					Transfer_data();//Cap nhat trang thai ban dau
+					if(flow<2000){
+						Heater1_on;
+					}
+					else {
+						Heater1_on;
+						Heater2_on;
+					}
+					Cooler_on; //Bat che do lam lanh
+					Vac_on;
+					Root_on; //Chay root pump
+					Pump2_on;//ngat bom dau ra	
+					HAL_Delay(1000);
+					Pump1_on; //Chay bom dau vao
+					Transfer_data();//Cap nhat trang thai ket thuc
+					stage=100;//Out khoi vong lap
+				}
+				if(stage==4){ //Tu muc cao xuong on dinh
+					Transfer_data();//Cap nhat trang thai ban dau
+					if(flow<2000){
+						Heater1_on;
+					}
+					else {
+						Heater1_on;
+						Heater2_on;
+					}
+					Cooler_on; //Bat che do lam lanh
+					Vac_on;
+					Root_on; //Chay root pump
+					Pump2_off;//ngat bom dau ra	
+					HAL_Delay(1000);
+					Pump1_on; //Chay bom dau vao
+					Transfer_data();//Cap nhat trang thai ket thuc
+					stage=100;//Out khoi vong lap
+				}
+				
+				
 		}
-		HAL_Delay(1000);
+		
+		}
+		else {
+			// Ngat tat ca cac thiet bi
+			Transfer_data();//Cap nhat trang thai ban dau
+			Pump1_off;
+			Pump2_off;
+			Root_off;
+			Vac_off;
+			Heater1_off;
+			Heater2_off;
+			VE_off;
+			Cooler_off;
+			Transfer_data();//Cap nhat trang thai ket thuc
+		}
+
+		HAL_Delay(200);
 
 
   /* USER CODE END WHILE */
